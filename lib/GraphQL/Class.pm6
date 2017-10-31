@@ -15,7 +15,6 @@ role GraphQL::Query {
 		my $schema = "{self.name}(";
 		my \sig = self.signature;
 		$schema ~= do for sig.params.skip.grep: *.name.substr(1) !=== "_" {
-			.say;
 			my \def = " = {.()}" with .default;
 			"{ .name.substr: 1 }: { .&translate-param }{ def }"
 		}.join: ", ";
