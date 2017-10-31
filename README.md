@@ -22,6 +22,7 @@ say User.new: :42id, :name<Fernando>, :status;
 say User.schema
 $ perl6 -Ilib test.p6
 User.new(id => 42, name => "Fernando", birthday => Date, status => Bool::True)
+# User class
 type User {
 	name    : String   # The user name
 	status  : Boolean  # Is it active?
