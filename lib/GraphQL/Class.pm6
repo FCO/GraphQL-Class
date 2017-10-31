@@ -15,7 +15,7 @@ role GraphQL::Query {
 		my $schema = "{self.name}(";
 		my \sig = self.signature;
 		$schema ~= do for sig.params.skip.grep: *.name.substr(1) !=== "_" {
-			my \def = " = {.()}" with .default;
+			my \def = do with .default { " = {.()}" } else {""};
 			"{ .name.substr: 1 }: { .&translate-param }{ def }"
 		}.join: ", ";
 		$schema ~ "): {sig.returns.&translate-param}"
@@ -87,6 +87,10 @@ multi translate-attr(Attribute \attr) {
 	} else {
 		"String"
 	}
+}
+
+multi translate-param(Mu:U) {
+    fail "A method must have a return type to be used as query"
 }
 
 multi translate-param(Parameter \attr) is default {

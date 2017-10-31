@@ -1,3 +1,7 @@
+# GraphQL::Class
+
+```
+$ cat test.p6
 use GraphQL::Class;
 
 #| User class
@@ -16,3 +20,16 @@ class User does GraphQL::Class {
 say User.new: :42id, :name<Fernando>, :status;
 
 say User.schema
+$ perl6 -Ilib test.p6
+User.new(id => 42, name => "Fernando", birthday => Date, status => Bool::True)
+type User {
+	name    : String   # The user name
+	status  : Boolean  # Is it active?
+	id      : ID!      # User Id
+	birthday: String   # The birthday of the user
+}
+type Query {
+	listusers(start: Int = 0, count: Int = 1): [User]
+	user(id: Int!): User
+}
+```
