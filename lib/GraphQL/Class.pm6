@@ -35,7 +35,8 @@ role GraphQL::Class {
 	}
 
 	method !attr-schema(--> Str()) {
-		my $schema ="type {self.^name} \{\n";
+		my $schema ="# {self.WHY}\n";
+		$schema ~="type {self.^name} \{\n";
 		my %schema-hash = self.schema-Hash;
 		my $attr-size = %schema-hash.keys>>.chars.max;
 		my $type-size = %schema-hash.values.map(*.<type>.chars).max;
