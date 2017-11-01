@@ -8,14 +8,18 @@ class User does GraphQL::Class {
    has Date $.birthday;             #= The birthday of the user
    has Bool $.status;               #= Is it active?
 
-   method all(::?CLASS:U: Int :$start is ID = 0, Int :$count = 1 --> Array[User]) is query<listusers> {
+   #| List Users
+   method list(::?CLASS:U: Int :$start is ID = 0, Int :$count = 1 --> Array[User]) is query<listusers> {
 	   @users[$start ..^ $start+$count]
    }
 
+   #| Get a specific user by id
    method get(::?CLASS:U: Int :$id! is ID --> User) is query<user> {
 	   @users[$id]
    }
 }
 say User.new: :42id, :name<Fernando>, :status;
 
-say User.schema
+say User.schema;
+
+say schema User, User;

@@ -35,7 +35,7 @@ role GraphQL::Class {
 		}
 	}
 
-	method !attr-schema(--> Str()) {
+	method attr-schema(--> Str()) {
 		my $schema ="# {self.WHY}\n";
 		$schema ~="type {self.^name} \{\n";
 		my %schema-hash = self.schema-Hash;
@@ -55,20 +55,20 @@ role GraphQL::Class {
 
 	method queries {
 		do for self.^methods.grep: GraphQL::Query {
-			"\t{.schema}"
+			(.WHY ?? "\t# {.WHY}\n" !! "") ~ "\t{.schema}"
 		}
 	}
 
-	method !query-schema(--> Str()) {
+	method query-schema(--> Str()) {
 		my $q = "type Query \{\n";
 		$q ~= self.queries.join: "\n";
 		$q ~ "\n}"
 	}
 
-	method schema(--> Str()) {
+	multi method schema(--> Str()) {
 		(
-			self!attr-schema,
-			self!query-schema,
+			self.attr-schema,
+			self.query-schema,
 		).join: "\n"
 	}
 }
@@ -135,5 +135,14 @@ multi trait_mod:<is>(Method $a, Bool :$query!) is export {
 
 multi trait_mod:<is>(Method $a, Str :$query!) is export {
 	$a does GraphQL::Query[$query]
+}
+
+sub schema(*@classes is copy --> Str()) is export {
+	@classes .= unique;
+	my $s = @classes.map(-> $class {
+		$class.attr-schema
+	}).join: "\n";
+	$s ~= "\ntype Query \{\n{@classes.map({|.queries}).join: "\n"}\n\}";
+	$s
 }
 
