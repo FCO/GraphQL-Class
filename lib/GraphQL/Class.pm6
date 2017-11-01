@@ -1,27 +1,6 @@
-my %map =
-	Str 	=> "String",
-	Bool	=> "Boolean",
-	Int		=> "Int"
-;
-
-role GraphQL::ID {
-	has $.graphQL-ID = True
-}
-
-role GraphQL::Query[Str $name] {
-	has Bool $.graphQL-query      = True;
-	has Str  $.graphQL-query-name = $name;
-
-	method schema {
-		my $schema = "{self.graphQL-query-name}(";
-		my \sig = self.signature;
-		$schema ~= do for sig.params.skip.grep: *.name.substr(1) !=== "_" {
-			my \def = do with .default { " = {.()}" } else {""};
-			"{ .name.substr: 1 }: { .&translate-param }{ def }"
-		}.join: ", ";
-		$schema ~ "): {sig.returns.&translate-param}"
-	}
-}
+use GraphQL::ID;
+use GraphQL::Query;
+use GraphQL::Functions;
 
 role GraphQL::Class {
 	%map{ ::?CLASS.^name } = ::?CLASS.^name;
@@ -73,52 +52,13 @@ role GraphQL::Class {
 	}
 }
 
-proto translate-attr(\attr) {
-	my $name = {*};
-	$name ~ ("!" if attr.required)
-}
-
-multi translate-attr(Positional \p) is default {
-	"[{ translate-attr p.of }]"
-}
-
-multi translate-attr(GraphQL::ID) is default {
-	"ID"
-}
-
-multi translate-attr(Attribute \attr) {
-	my \name = attr.type.^name;
-	do with %map{name} {
-		$_
-	} else {
-		"String"
-	}
-}
-
-multi translate-param(Mu:U) {
-    fail "A method must have a return type to be used as query"
-}
-
-multi translate-param(Parameter \attr) is default {
-	my $name = translate-param attr.type;
-	$name ~ ("!" unless attr.optional)
-}
-
-multi translate-param(Positional \p) {
-	"[{ translate-param p.of }]"
-}
-
-multi translate-param(GraphQL::ID) {
-	"ID"
-}
-
-multi translate-param(\type) {
-	my \name = type.^name;
-	do with %map{name} {
-		$_
-	} else {
-		"String"
-	}
+sub schema(*@classes is copy --> Str()) is export {
+	@classes .= unique;
+	my $s = @classes.map(-> $class {
+		$class.attr-schema
+	}).join: "\n";
+	$s ~= "\ntype Query \{\n{@classes.map({|.queries}).join: "\n"}\n\}";
+	$s
 }
 
 multi trait_mod:<is>(Attribute $a, :$ID!) is export {
@@ -136,13 +76,3 @@ multi trait_mod:<is>(Method $a, Bool :$query!) is export {
 multi trait_mod:<is>(Method $a, Str :$query!) is export {
 	$a does GraphQL::Query[$query]
 }
-
-sub schema(*@classes is copy --> Str()) is export {
-	@classes .= unique;
-	my $s = @classes.map(-> $class {
-		$class.attr-schema
-	}).join: "\n";
-	$s ~= "\ntype Query \{\n{@classes.map({|.queries}).join: "\n"}\n\}";
-	$s
-}
-

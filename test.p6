@@ -20,6 +20,10 @@ class User does GraphQL::Class {
 }
 say User.new: :42id, :name<Fernando>, :status;
 
+say "\n===================\n";
+
 say User.schema;
+
+say "\n===================\n";
 
 say schema User, User;
