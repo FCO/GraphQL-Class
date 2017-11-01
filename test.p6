@@ -8,7 +8,7 @@ class User does GraphQL::Class {
    has Date $.birthday;             #= The birthday of the user
    has Bool $.status;               #= Is it active?
 
-   method all(::?CLASS:U: Int :$start is ID = 0, Int :$count = 1 --> Positional[User]) is query<listusers> {
+   method all(::?CLASS:U: Int :$start is ID = 0, Int :$count = 1 --> Array[User]) is query<listusers> {
 	   @users[$start ..^ $start+$count]
    }
 
