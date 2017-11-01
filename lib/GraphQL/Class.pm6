@@ -8,11 +8,12 @@ role GraphQL::ID {
 	has $.graphQL-ID = True
 }
 
-role GraphQL::Query {
-	has $.graphQL-query = True;
+role GraphQL::Query[Str $name] {
+	has Bool $.graphQL-query      = True;
+	has Str  $.graphQL-query-name = $name;
 
 	method schema {
-		my $schema = "{self.name}(";
+		my $schema = "{self.graphQL-query-name}(";
 		my \sig = self.signature;
 		$schema ~= do for sig.params.skip.grep: *.name.substr(1) !=== "_" {
 			my \def = do with .default { " = {.()}" } else {""};
@@ -52,12 +53,16 @@ role GraphQL::Class {
 		$schema ~ "\n}"
 	}
 
+	method queries {
+		do for self.^methods.grep: GraphQL::Query {
+			"\t{.schema}"
+		}
+	}
+
 	method !query-schema(--> Str()) {
 		my $q = "type Query \{\n";
-		for self.^methods.grep: GraphQL::Query {
-			$q ~= "\t{.schema}\n"
-		}
-		$q ~ "}"
+		$q ~= self.queries.join: "\n";
+		$q ~ "\n}"
 	}
 
 	method schema(--> Str()) {
@@ -124,7 +129,11 @@ multi trait_mod:<is>(Parameter $a, :$ID!) is export {
 	$a does GraphQL::ID
 }
 
-multi trait_mod:<is>(Method $a, :$query!) is export {
-	$a does GraphQL::Query
+multi trait_mod:<is>(Method $a, Bool :$query!) is export {
+	trait_mod:<is>($a, :query($a.name))
+}
+
+multi trait_mod:<is>(Method $a, Str :$query!) is export {
+	$a does GraphQL::Query[$query]
 }
 
